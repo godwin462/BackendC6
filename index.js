@@ -1,9 +1,9 @@
 const http = require("http");
 const fs = require("fs");
 const studentDb = require("./db/database.json");
-const {on} = require("events");
-// const uuid = require("uuid").v4;
-const uuid = require("crypto").randomUUID;
+// const {on} = require("events");
+const uuid = require("uuid").v4;
+// const uuid = require("crypto").randomUUID;
 
 // console.log(crypto());
 // console.log(uuid());
@@ -103,6 +103,26 @@ const server = http.createServer((req, res) => {
 
             // res.end(JSON.stringify({data: student, index}));
         });
+    }
+    else if (url.startsWith("/delete-student/") && method === "DELETE") {
+        const id = url.split("/")[2];
+        const index = studentDb.findIndex((student) => student.id === id);
+
+        if (index === -1) {
+            res.writeHead(404, { "content-type": "application/json" });
+            res.end(JSON.stringify({ message: "Student not found" }));
+        } else {
+            const deletedStudent = studentDb.splice(index, 1)[0];
+            fs.writeFile("./db/database.json", JSON.stringify(studentDb, null, 2), "utf-8", (err) => {
+                if (err) {
+                    res.writeHead(500, { "content-type": "application/json" });
+                    res.end(JSON.stringify({ message: "Error deleting student" }));
+                } else {
+                    res.writeHead(200, { "content-type": "application/json" });
+                    res.end(JSON.stringify({ message: "Student deleted successfully", data: deletedStudent }));
+                }
+            });
+        }
     }
 });
 // console.log(new URL(`http://${process.env.HOST ?? 'localhost'}${http.request.url}`));
